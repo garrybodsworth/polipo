@@ -21,6 +21,9 @@ THE SOFTWARE.
 */
 
 #include "polipo.h"
+#ifdef WIN32
+#include <iphlpapi.h>
+#endif /*WIN32*/
 
 #ifndef NO_STANDARD_RESOLVER
 #ifndef NO_FANCY_RESOLVER
@@ -104,6 +107,7 @@ static int sendQuery(DnsQueryPtr query);
 static int idSeed;
 #endif
 
+#ifndef WIN32
 #ifndef NO_FANCY_RESOLVER
 static int
 parseResolvConf(char *filename)
@@ -166,7 +170,55 @@ parseResolvConf(char *filename)
         return 0;
     }
 }
-#endif
+#endif /*NO_FANCY_RESOLVER*/
+#else /*WIN32*/
+
+static int getlocalDNS() {
+
+    FIXED_INFO *FixedInfo;
+    ULONG ulOutBufLen;
+    DWORD dwRetVal;
+    IP_ADDR_STRING *pIPAddr;
+
+    FixedInfo = (FIXED_INFO*)GlobalAlloc(GPTR, sizeof(FIXED_INFO));
+    ulOutBufLen = sizeof(FIXED_INFO);
+
+    if(ERROR_BUFFER_OVERFLOW == GetNetworkParams(FixedInfo, &ulOutBufLen)) {
+        GlobalFree(FixedInfo);
+        FixedInfo = (FIXED_INFO *)GlobalAlloc(GPTR, ulOutBufLen);
+        if(FixedInfo == NULL) {
+            do_log(L_ERROR, "Error allocating memory for FIXED_INFO\n");
+            return -1;
+        }
+    }
+
+    if(dwRetVal = GetNetworkParams(FixedInfo, &ulOutBufLen)) {
+        do_log(L_ERROR, "GetNetworkParams failed with error: %08x\n", dwRetVal);
+        return -1;
+    } else {
+        /*
+        do_log(L_WARN, "Host Name: %s\n", FixedInfo->HostName);
+        do_log(L_WARN, "Domain Name: %s\n", FixedInfo->DomainName);
+        printf("DNS Servers:\n");
+        printf("\t%s\n", FixedInfo->DnsServerList.IpAddress.String);
+        */
+
+        if(dnsNameServer == NULL || dnsNameServer->string[0] == '\0') {
+            dnsNameServer = internAtom(FixedInfo->DnsServerList.IpAddress.String);
+        }
+        return 0;
+
+        /*
+        pIPAddr = FixedInfo->DnsServerList.Next;
+        while(pIPAddr) {
+            printf("\t%s\n", pIPAddr->IpAddress.String);
+            pIPAddr = pIPAddr->Next;
+        }
+        */
+    }
+}
+
+#endif /*WIN32*/
 
 void
 preinitDns()
@@ -194,12 +246,20 @@ preinitDns()
             do_log_error(L_WARN, errno, "DNS: couldn't create socket");
         }
     } else {
+#ifdef WIN32
+        CLOSE(fd);
+#else /* !WIN32 */
         close(fd);
+#endif /* WIN32 */
     }
 #endif
 
 #ifndef NO_FANCY_RESOLVER
+#ifndef WIN32
     parseResolvConf("/etc/resolv.conf");
+#else
+    getlocalDNS();
+#endif //WIN32
     if(dnsNameServer == NULL || dnsNameServer->string[0] == '\0')
         dnsNameServer = internAtom("127.0.0.1");
     CONFIG_VARIABLE(dnsMaxTimeout, CONFIG_TIME,
@@ -532,8 +592,10 @@ really_do_gethostbyname(AtomPtr name, ObjectPtr object)
 #ifdef EAI_NONAME
     case EAI_NONAME:
 #endif
+#ifndef WIN32:
 #ifdef EAI_NODATA
     case EAI_NODATA:
+#endif
 #endif
         error = EDNS_NO_ADDRESS; break;
     case EAI_FAIL: error = EDNS_NO_RECOVERY; break;
@@ -541,7 +603,9 @@ really_do_gethostbyname(AtomPtr name, ObjectPtr object)
 #ifdef EAI_MEMORY
     case EAI_MEMORY: error = ENOMEM; break;
 #endif
+#ifndef WIN32:
     case EAI_SYSTEM: error = errno; break;
+#endif
     default: error = EUNKNOWN;
     }
 
