@@ -33,6 +33,7 @@ typedef struct _DiskCacheEntry {
     off_t size;
     int body_offset;
     short local;
+    short writeable;
     short metadataDirty;
     struct _DiskCacheEntry *next;
     struct _DiskCacheEntry *previous;
