@@ -35,7 +35,12 @@
 #ifdef HAS_STDINT_H
 #include <stdint.h>
 #elif defined(HAS_INTTYPES_H)
+#ifdef _MSC_VER
+#include "inttypes.h"
+#else
 #include <inttypes.h>
+#endif
+
 #endif
 
 /* typedef a 32-bit type */
