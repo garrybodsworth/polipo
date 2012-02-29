@@ -37,17 +37,13 @@ THE SOFTWARE.
 /* Unfortunately, there's no hiding it. */
 #define HAVE_WINSOCK 1
 
-/* At time of writing, a fair bit of stuff doesn't work under Mingw.
- * Hopefully they will be fixed later (especially the disk-cache).
- */
-#define NO_IPv6 1
-
 #include <io.h>
 
 #define S_IROTH S_IREAD
 
 /* Pull in winsock.h for (almost) berkeley sockets. */
-#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #define ENOTCONN        WSAENOTCONN
 #define EWOULDBLOCK     WSAEWOULDBLOCK
 #define ENOBUFS         WSAENOBUFS
@@ -63,6 +59,7 @@ THE SOFTWARE.
  * are copied from linux man pages. A poll() macro is defined to
  * call the version in mingw.c.
  */
+#ifdef __MINGW32__
 #define POLLIN      0x0001    /* There is data to read */
 #define POLLPRI     0x0002    /* There is urgent data to read */
 #define POLLOUT     0x0004    /* Writing now will not block */
@@ -74,7 +71,16 @@ struct pollfd {
     short events;     /* requested events */
     short revents;    /* returned events */
 };
+#endif
 #define poll(x, y, z)        win32_poll(x, y, z)
+
+#ifdef __MINGW32__
+typedef USHORT ADDRESS_FAMILY;
+int win32_inet_pton(int family, const char * addr, void * dst);
+#define inet_pton(x, y, z) win32_inet_pton(x, y, z)
+#endif
+
+struct in6_addr sin6;
 
 /* These wrappers do nothing special except set the global errno variable if
  * an error occurs (winsock doesn't do this by default). They set errno

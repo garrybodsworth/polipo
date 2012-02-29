@@ -488,4 +488,29 @@ polipo_readv(int fd, const struct iovec *vector, int count)
     }
     return ret;
 }
+
+#ifdef __MINGW32__
+int
+win32_inet_pton(int family, const char * addr, void * dst)
+{
+    struct sockaddr_storage ss;
+    int sslen = sizeof(ss);
+
+    ZeroMemory(&ss, sizeof(ss));
+    ss.ss_family = (ADDRESS_FAMILY)family;
+
+    if (WSAStringToAddressA((LPSTR)addr, family, NULL, (struct sockaddr*) &ss, &sslen) == 0) {
+        if (family == AF_INET) {
+            memcpy(dst, &((struct sockaddr_in*)&ss)->sin_addr, sizeof(IN_ADDR));
+            return 1;
+        } else if (family == AF_INET6) {
+            memcpy(dst, &((struct sockaddr_in6*) &ss)->sin6_addr, sizeof(IN6_ADDR));
+            return 1;
+        }
+    }
+
+    return 0;
+}
+#endif /* __MINGW32__ */
+
 #endif
