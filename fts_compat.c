@@ -25,9 +25,16 @@ THE SOFTWARE.
 
 #include <stdlib.h>
 #include <errno.h>
+
+#ifdef _MSC_VER
+#include "polipo.h"
+#include <direct.h>
+#else
 #include <unistd.h>
-#include <sys/types.h>
 #include <dirent.h>
+#endif
+
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>

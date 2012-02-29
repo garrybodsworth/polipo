@@ -50,6 +50,12 @@ struct _FTSENT {
 
 typedef struct _FTSENT FTSENT;
 
+#ifdef _MSC_VER
+#include "dirent.h"
+#else
+#include <dirent.h>
+#endif
+
 struct _FTS {
     int depth;
     DIR *dir[FTS_MAX_DEPTH];
