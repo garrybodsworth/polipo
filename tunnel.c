@@ -170,7 +170,7 @@ do_tunnel(int fd, char *buf, int offset, int len, AtomPtr url)
         return;
     }
     tunnel->port = port;
-    
+#ifndef NO_FORBIDDEN
     if (tunnelIsMatched(url->string, url->length, 
 			tunnel->hostname->string, tunnel->hostname->length)) {
         releaseAtom(url);
@@ -178,6 +178,7 @@ do_tunnel(int fd, char *buf, int offset, int len, AtomPtr url)
 	logTunnel(tunnel,1);
         return;
     }
+#endif
     
     logTunnel(tunnel,0);
     
