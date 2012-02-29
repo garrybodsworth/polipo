@@ -52,7 +52,10 @@ typedef struct _Condition {
 
 void initEvents(void);
 void uninitEvents(void);
+
+#ifdef HAVE_FORK
 void interestingSignals(sigset_t *ss);
+#endif /* HAVE_FORK */
 
 TimeEventHandlerPtr scheduleTimeEvent(int seconds,
                                       int (*handler)(TimeEventHandlerPtr),
