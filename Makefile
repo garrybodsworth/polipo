@@ -36,7 +36,8 @@ CDEBUGFLAGS = -Os -g -Wall -fno-strict-aliasing
 # On mingw, you need
 
 # EXE=.exe
-# LDLIBS = -lwsock32
+# EXTRA_DEFINES = -DWIN32 -DHAVE_IPv6 -DWINVER=0x0601
+# LDLIBS = -lws2_32 -lIphlpapi -lwsock32
 
 FILE_DEFINES = -DLOCAL_ROOT=\"$(LOCAL_ROOT)/\" \
                -DDISK_CACHE_ROOT=\"$(DISK_CACHE_ROOT)/\"
