@@ -457,7 +457,7 @@ time_t
 mktime_gmt(struct tm *tm)
 {
     time_t t;
-    char *tz;
+    char *tz = NULL;
     static char *old_tz = NULL;
 
     tz = getenv("TZ");
@@ -466,7 +466,7 @@ mktime_gmt(struct tm *tm)
     t = mktime(tm);
     if(old_tz)
         free(old_tz);
-    if(tz)
+    if(tz && tz[0]>0)
         old_tz = sprintf_a("TZ=%s", tz);
     else
         old_tz = strdup("TZ");  /* XXX - non-portable? */
