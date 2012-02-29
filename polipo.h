@@ -39,13 +39,13 @@ THE SOFTWARE.
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #ifndef WIN32 /*MINGW*/
+#include <unistd.h>
+#include <sys/time.h>
+#include <dirent.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -59,6 +59,14 @@ THE SOFTWARE.
 #include <sys/ioctl.h>
 #include <signal.h>
 #endif
+
+#if !defined(va_copy)
+#if defined(__va_copy)
+#  define va_copy(dst, src) __va_copy((dst), (src))
+#else
+#  define va_copy(dst, src) do{((dst) = (src)) ;} while(0) 
+#endif /*defined(__va_copy)*/
+#endif /*!defined(va_copy)*/
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -181,6 +189,15 @@ THE SOFTWARE.
 #ifndef HAVE_REGEX
 #define NO_FORBIDDEN
 #endif
+#endif
+
+#ifdef _MSC_VER
+
+#define F_OK 00
+#define snprintf _snprintf
+#define S_ISDIR(x) (S_IFDIR&(x))
+#define S_ISREG(x) (S_IFREG&(x))
+
 #endif
 
 #ifdef HAVE_READV_WRITEV
