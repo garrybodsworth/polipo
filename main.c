@@ -22,6 +22,16 @@ THE SOFTWARE.
 
 #include "polipo.h"
 
+#ifdef DEBUG
+#include <direct.h>
+#endif /*DEBUG*/
+
+#ifndef WIN32
+#define DEFAULT_CONFIG_PATH "/etc/polipo/config"
+#else
+#define  DEFAULT_CONFIG_PATH "./config"
+#endif
+
 AtomPtr configFile = NULL;
 AtomPtr pidFile = NULL;
 int daemonise = 0;
@@ -45,6 +55,12 @@ main(int argc, char **argv)
     int i;
     int rc;
     int expire = 0, printConfig = 0;
+
+#ifdef DEBUG
+    char buf[256];
+	if(getcwd(buf,sizeof(buf)))
+		printf("CWD:%s\n",buf);
+#endif /*DEBUG*/
 
     initAtoms();
     CONFIG_VARIABLE(daemonise, CONFIG_BOOLEAN, "Run as a daemon");
@@ -107,8 +123,8 @@ main(int argc, char **argv)
     }
 
     if(configFile == NULL) {
-        if(access("/etc/polipo/config", F_OK) >= 0)
-            configFile = internAtom("/etc/polipo/config");
+        if(access(DEFAULT_CONFIG_PATH, F_OK) >= 0)
+            configFile = internAtom( DEFAULT_CONFIG_PATH);
         if(configFile && access(configFile->string, F_OK) < 0) {
             releaseAtom(configFile);
             configFile = NULL;
